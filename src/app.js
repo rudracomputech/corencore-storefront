@@ -1,17 +1,16 @@
 /**
  * Core & Core - Mother & Baby Storefront Main Application
+ * Structured with 3 Primary Layers:
+ * - Layer 1: Header Layer
+ * - Layer 2: Body Layer
+ * - Layer 3: Footer Layer
  */
 
-import { renderHeader } from './components/Header.js';
-import { renderHero } from './components/Hero.js';
-import { renderCategories } from './components/Categories.js';
-import { renderRoutineQuiz } from './components/RoutineQuiz.js';
-import { renderProductGrid } from './components/ProductGrid.js';
+import { renderHeaderLayer } from './layers/HeaderLayer.js';
+import { renderBodyLayer } from './layers/BodyLayer.js';
+import { renderFooterLayer } from './layers/FooterLayer.js';
 import { renderProductModal } from './components/ProductModal.js';
 import { renderCartDrawer } from './components/CartDrawer.js';
-import { renderSafetyStandards } from './components/SafetyStandards.js';
-import { renderReviews } from './components/Reviews.js';
-import { renderFooter } from './components/Footer.js';
 import { renderPagesModal } from './components/PagesModal.js';
 import { renderAdminHub } from './components/AdminHub.js';
 
@@ -25,7 +24,7 @@ const CURRENCY_RATES = {
   AUD: { symbol: 'AU$', rate: 1.52 }
 };
 
-// Fallback initial products (real ShopBase data)
+// Fallback initial products
 const FALLBACK_PRODUCTS = [
   {
     id: 1000000672062239,
@@ -206,35 +205,33 @@ const FALLBACK_PRODUCTS = [
     ],
     safety_badges: ["Organic Cotton Bag", "Save 23% on Bundle", "Pediatrician Tested"]
   }
-];;
+];
 
 class App {
   constructor() {
     this.state = {
       products: FALLBACK_PRODUCTS,
-      cart: JSON.parse(localStorage.getItem('corencore_cart') || '[]'),
-      currency: 'USD',
       activeCategory: 'all',
+      currency: 'USD',
       searchQuery: '',
       sortBy: 'featured',
+      cart: JSON.parse(localStorage.getItem('corencore_cart') || '[]'),
       isCartOpen: false,
-      appliedPromo: localStorage.getItem('corencore_promo') || '',
       activeModalProduct: null,
       activePageKey: null,
-      isAdminHubOpen: false
+      isAdminHubOpen: false,
+      appliedPromo: localStorage.getItem('corencore_promo') || null,
+      quizStep: 1,
+      quizAnswers: {}
     };
 
     this.dom = {
-      header: document.getElementById('header-container'),
-      hero: document.getElementById('hero-container'),
-      trustBar: document.getElementById('trust-bar-container'),
-      categories: document.getElementById('categories-container'),
-      routineQuiz: document.getElementById('routine-quiz-container'),
-      productGrid: document.getElementById('product-grid-container'),
-      safetyStandards: document.getElementById('safety-standards-container'),
-      reviews: document.getElementById('reviews-container'),
-      guideBanner: document.getElementById('guide-banner-container'),
-      footer: document.getElementById('footer-container'),
+      // 3 Primary Layers
+      layerHeader: document.getElementById('layer-header') || document.getElementById('header-container'),
+      layerBody: document.getElementById('layer-body') || document.getElementById('main-content'),
+      layerFooter: document.getElementById('layer-footer') || document.getElementById('footer-container'),
+
+      // Modal Overlays
       cartDrawer: document.getElementById('cart-drawer-root'),
       productModal: document.getElementById('product-modal-root'),
       pagesModal: document.getElementById('pages-modal-root'),
@@ -263,7 +260,7 @@ class App {
   }
 
   async init() {
-    console.log("🌸 Initializing Core & Core Mother & Baby Storefront...");
+    console.log("🌸 Initializing Core & Core 3-Layer Storefront (Header / Body / Footer)...");
     await this.fetchProducts();
     this.render();
   }
@@ -297,18 +294,18 @@ class App {
 
   setCategoryFilter(category) {
     this.state.activeCategory = category;
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
   }
 
   searchProducts(query) {
     this.state.searchQuery = query;
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
   }
 
   setSortBy(sortKey) {
     this.state.sortBy = sortKey;
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
   }
 
   toggleCart(isOpen) {
@@ -328,9 +325,9 @@ class App {
         cartItemId,
         id: product.id,
         variantId: selectedVariant.id,
-        shopbaseHandle: product.shopbase_handle || product.handle, // real ShopBase handle for checkout
+        shopbaseHandle: product.shopbase_handle || product.handle,
         title: product.title,
-        variantTitle: selectedVariant.title !== 'Standard' ? selectedVariant.title : '',
+        variantTitle: selectedVariant.title !== 'Standard' && selectedVariant.title !== '1 PC' ? selectedVariant.title : '',
         price: selectedVariant.price || product.price,
         image: product.image || product.images?.[0],
         quantity
@@ -338,7 +335,7 @@ class App {
     }
 
     this.saveCart();
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
   }
 
@@ -352,14 +349,14 @@ class App {
       }
     }
     this.saveCart();
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
   }
 
   removeFromCart(cartItemId) {
     this.state.cart = this.state.cart.filter(i => i.cartItemId !== cartItemId);
     this.saveCart();
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
   }
 
@@ -376,37 +373,14 @@ class App {
   proceedToCheckout() {
     if (!this.state.cart.length) return;
     
-    // PlusBase/ShopBase on this store doesn't support /cart/{variantId}:qty permalink.
-    // Instead, redirect to the first product's page with the real ShopBase handle.
-    // Cart items store shopbaseHandle (real handle from ShopBase).
     const firstItem = this.state.cart[0];
-    
     let checkoutUrl;
     if (firstItem.shopbaseHandle) {
-      // Go to product page with the real ShopBase handle
       checkoutUrl = `https://corencore.onshopbase.com/products/${firstItem.shopbaseHandle}`;
-    } else if (firstItem.variantId) {
-      // Fallback: try variant-based cart URL (works on standard Shopify stores)
-      const cartQuery = this.state.cart.map(i => `${i.variantId}:${i.quantity}`).join(',');
-      checkoutUrl = `https://corencore.onshopbase.com/cart/${cartQuery}`;
     } else {
       checkoutUrl = `https://corencore.onshopbase.com/collections/all`;
     }
-    
-    // Open each product page for multi-item carts
-    if (this.state.cart.length > 1) {
-      this.state.cart.forEach((item, idx) => {
-        if (item.shopbaseHandle) {
-          const url = `https://corencore.onshopbase.com/products/${item.shopbaseHandle}`;
-          if (idx === 0) window.open(url, '_blank');
-          else setTimeout(() => window.open(url, '_blank'), idx * 300);
-        }
-      });
-    } else {
-      window.open(checkoutUrl, '_blank');
-    }
-    
-    console.log("Opening ShopBase product page(s) for checkout:", checkoutUrl);
+    window.open(checkoutUrl, '_blank');
   }
 
   openProductModal(product) {
@@ -440,14 +414,16 @@ class App {
   }
 
   render() {
-    renderHeader(this.dom.header, this.state, this.actions);
-    renderHero(this.dom.hero, this.dom.trustBar, this.actions);
-    renderCategories(this.dom.categories, this.actions);
-    renderRoutineQuiz(this.dom.routineQuiz, this.state, this.actions);
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
-    renderSafetyStandards(this.dom.safetyStandards);
-    renderReviews(this.dom.reviews);
-    renderFooter(this.dom.guideBanner, this.dom.footer, this.actions);
+    // 1. Render Header Layer
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
+
+    // 2. Render Body Layer
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
+
+    // 3. Render Footer Layer
+    renderFooterLayer(this.dom.layerFooter, this.state, this.actions);
+
+    // 4. Render Modals & Drawers Overlays
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
     renderProductModal(this.dom.productModal, this.state.activeModalProduct, this.state, this.actions);
     renderPagesModal(this.dom.pagesModal, this.state.activePageKey, this.actions);

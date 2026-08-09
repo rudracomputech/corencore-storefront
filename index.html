@@ -11,48 +11,27 @@
   <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 <body>
-  <!-- Header / Announcement / Navigation Layer -->
-  <header id="header-container"></header>
+  <!-- ========================================== -->
+  <!-- LAYER 1: Header Layer                      -->
+  <!-- ========================================== -->
+  <header id="layer-header" class="storefront-layer layer-header" data-layer="header"></header>
 
-  <main id="main-content">
-    <!-- Hero Banner Layer -->
-    <section id="hero-container"></section>
+  <!-- ========================================== -->
+  <!-- LAYER 2: Body Layer                        -->
+  <!-- ========================================== -->
+  <main id="layer-body" class="storefront-layer layer-body" data-layer="body"></main>
 
-    <!-- Trust Badges Layer -->
-    <section id="trust-bar-container"></section>
+  <!-- ========================================== -->
+  <!-- LAYER 3: Footer Layer                      -->
+  <!-- ========================================== -->
+  <footer id="layer-footer" class="storefront-layer layer-footer" data-layer="footer"></footer>
 
-    <!-- Category Showcase Layer -->
-    <section id="categories-container"></section>
-
-    <!-- Interactive Routine Finder / Quiz Layer -->
-    <section id="routine-quiz-container"></section>
-
-    <!-- Featured Product Grid Layer -->
-    <section id="product-grid-container"></section>
-
-    <!-- Clean Standards & Ingredients Transparency Layer -->
-    <section id="safety-standards-container"></section>
-
-    <!-- Customer Reviews & Social Proof Layer -->
-    <section id="reviews-container"></section>
-
-    <!-- Routine Guide & Newsletter Layer -->
-    <section id="guide-banner-container"></section>
-  </main>
-
-  <!-- Footer Layer -->
-  <footer id="footer-container"></footer>
-
-  <!-- Interactive Slide-Out Cart Drawer -->
+  <!-- ========================================== -->
+  <!-- Modals & Drawers Layer Overlay             -->
+  <!-- ========================================== -->
   <div id="cart-drawer-root"></div>
-
-  <!-- Product Quick-View Modal -->
   <div id="product-modal-root"></div>
-
-  <!-- Information Pages Modal -->
   <div id="pages-modal-root"></div>
-
-  <!-- Admin Sync & Live ShopBase Hub Modal -->
   <div id="admin-hub-root"></div>
 
   <!-- Main Application Script -->

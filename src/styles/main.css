@@ -109,6 +109,48 @@ a {
 }
 
 /* ==========================================================================
+   3-Layer Storefront Layout Architecture
+   Layer 1: Header Layer
+   Layer 2: Body Layer
+   Layer 3: Footer Layer
+   ========================================================================== */
+
+.storefront-layers-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.storefront-layer {
+  width: 100%;
+  position: relative;
+}
+
+.layer-header {
+  z-index: 100;
+  position: sticky;
+  top: 0;
+}
+
+.layer-body {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.layer-footer {
+  margin-top: auto;
+  z-index: 10;
+}
+
+.body-layer-section {
+  width: 100%;
+  position: relative;
+}
+
+/* ==========================================================================
    Header & Announcement Bar
    ========================================================================== */
 

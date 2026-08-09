@@ -1,19 +1,14 @@
 /**
  * Core & Core - Mother & Baby Storefront Embed Script
- * Injects and runs the complete Mother Skin Care & Baby Care storefront directly on corencore.onshopbase.com
+ * Injects and runs the complete 3-Layer Storefront (Header Layer, Body Layer, Footer Layer) directly on corencore.onshopbase.com
  */
 
 import { MOTHER_AND_BABY_PRODUCTS } from '../server/catalog-data.js';
-import { renderHeader } from './components/Header.js';
-import { renderHero } from './components/Hero.js';
-import { renderCategories } from './components/Categories.js';
-import { renderRoutineQuiz } from './components/RoutineQuiz.js';
-import { renderProductGrid } from './components/ProductGrid.js';
+import { renderHeaderLayer } from './layers/HeaderLayer.js';
+import { renderBodyLayer } from './layers/BodyLayer.js';
+import { renderFooterLayer } from './layers/FooterLayer.js';
 import { renderProductModal } from './components/ProductModal.js';
 import { renderCartDrawer } from './components/CartDrawer.js';
-import { renderSafetyStandards } from './components/SafetyStandards.js';
-import { renderReviews } from './components/Reviews.js';
-import { renderFooter } from './components/Footer.js';
 import { renderPagesModal } from './components/PagesModal.js';
 import { renderAdminHub } from './components/AdminHub.js';
 
@@ -68,23 +63,19 @@ class EmbedApp {
   }
 
   init() {
-    console.log("🌸 Core & Core Mother & Baby Storefront Loaded on Live ShopBase");
+    console.log("🌸 Core & Core 3-Layer Storefront Loaded on Live ShopBase");
     this.bindDom();
     this.render();
   }
 
   bindDom() {
     this.dom = {
-      header: document.getElementById('header-container'),
-      hero: document.getElementById('hero-container'),
-      trustBar: document.getElementById('trust-bar-container'),
-      categories: document.getElementById('categories-container'),
-      routineQuiz: document.getElementById('routine-quiz-container'),
-      productGrid: document.getElementById('product-grid-container'),
-      safetyStandards: document.getElementById('safety-standards-container'),
-      reviews: document.getElementById('reviews-container'),
-      guideBanner: document.getElementById('guide-banner-container'),
-      footer: document.getElementById('footer-container'),
+      // 3 Primary Layers
+      layerHeader: document.getElementById('layer-header'),
+      layerBody: document.getElementById('layer-body'),
+      layerFooter: document.getElementById('layer-footer'),
+
+      // Modal Overlays
       cartDrawer: document.getElementById('cart-drawer-root'),
       productModal: document.getElementById('product-modal-root'),
       pagesModal: document.getElementById('pages-modal-root'),
@@ -106,18 +97,18 @@ class EmbedApp {
 
   setCategoryFilter(category) {
     this.state.activeCategory = category;
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
   }
 
   searchProducts(query) {
     this.state.searchQuery = query;
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
   }
 
   setSortBy(sortKey) {
     this.state.sortBy = sortKey;
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
   }
 
   toggleCart(isOpen) {
@@ -147,7 +138,7 @@ class EmbedApp {
     }
 
     this.saveCart();
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
   }
 
@@ -161,14 +152,14 @@ class EmbedApp {
       }
     }
     this.saveCart();
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
   }
 
   removeFromCart(cartItemId) {
     this.state.cart = this.state.cart.filter(i => i.cartItemId !== cartItemId);
     this.saveCart();
-    renderHeader(this.dom.header, this.state, this.actions);
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
   }
 
@@ -226,14 +217,16 @@ class EmbedApp {
   }
 
   render() {
-    renderHeader(this.dom.header, this.state, this.actions);
-    renderHero(this.dom.hero, this.dom.trustBar, this.actions);
-    renderCategories(this.dom.categories, this.actions);
-    renderRoutineQuiz(this.dom.routineQuiz, this.state, this.actions);
-    renderProductGrid(this.dom.productGrid, this.state, this.actions);
-    renderSafetyStandards(this.dom.safetyStandards);
-    renderReviews(this.dom.reviews);
-    renderFooter(this.dom.guideBanner, this.dom.footer, this.actions);
+    // 1. Render Header Layer
+    renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
+
+    // 2. Render Body Layer
+    renderBodyLayer(this.dom.layerBody, this.state, this.actions);
+
+    // 3. Render Footer Layer
+    renderFooterLayer(this.dom.layerFooter, this.state, this.actions);
+
+    // 4. Render Modals & Drawers Overlays
     renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
     renderProductModal(this.dom.productModal, this.state.activeModalProduct, this.state, this.actions);
     renderPagesModal(this.dom.pagesModal, this.state.activePageKey, this.actions);
@@ -265,25 +258,24 @@ function mountStorefront() {
   // 2. Set Page Title & Meta
   document.title = "Core & Core — Pure Mother & Baby Care";
 
-  // 3. Inject Root Markup
+  // 3. Inject 3-Layer Root Markup
   let root = document.getElementById('corencore-storefront-root');
   if (!root) {
     root = document.createElement('div');
     root.id = 'corencore-storefront-root';
+    root.className = 'storefront-layers-wrapper';
 
     root.innerHTML = `
-      <header id="header-container"></header>
-      <main id="main-content">
-        <section id="hero-container"></section>
-        <section id="trust-bar-container"></section>
-        <section id="categories-container"></section>
-        <section id="routine-quiz-container"></section>
-        <section id="product-grid-container"></section>
-        <section id="safety-standards-container"></section>
-        <section id="reviews-container"></section>
-        <section id="guide-banner-container"></section>
-      </main>
-      <footer id="footer-container"></footer>
+      <!-- LAYER 1: Header Layer -->
+      <header id="layer-header" class="storefront-layer layer-header" data-layer="header"></header>
+
+      <!-- LAYER 2: Body Layer -->
+      <main id="layer-body" class="storefront-layer layer-body" data-layer="body"></main>
+
+      <!-- LAYER 3: Footer Layer -->
+      <footer id="layer-footer" class="storefront-layer layer-footer" data-layer="footer"></footer>
+
+      <!-- Modals & Drawers Layer Overlay -->
       <div id="cart-drawer-root"></div>
       <div id="product-modal-root"></div>
       <div id="pages-modal-root"></div>
@@ -293,7 +285,7 @@ function mountStorefront() {
     document.body.appendChild(root);
   }
 
-  // Hide default ShopBase theme elements when our storefront is active
+  // Hide default ShopBase theme elements when our 3-layer storefront is active
   const hideStyles = document.createElement('style');
   hideStyles.id = 'corencore-hide-default';
   hideStyles.textContent = `
@@ -321,12 +313,8 @@ function mountStorefront() {
 // Ensure execution on load & observe DOM mutations in case of client-side SPA routing
 function initStorefront() {
   mountStorefront();
-  
-  // Re-check after 500ms and 1500ms for delayed SPA rendering
   setTimeout(mountStorefront, 500);
   setTimeout(mountStorefront, 1500);
-
-  // Listen for popstate and hashchange
   window.addEventListener('popstate', mountStorefront);
   window.addEventListener('hashchange', mountStorefront);
 }
