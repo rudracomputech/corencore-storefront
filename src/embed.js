@@ -241,28 +241,20 @@ class EmbedApp {
   }
 }
 
-// Check if we should mount on this page (Homepage or general storefront)
-function shouldMountStorefront() {
-  const path = window.location.pathname.toLowerCase();
+// Check if we should mount on this page
+function isHomepage() {
+  const path = window.location.pathname.toLowerCase().trim();
   return path === '/' || path === '' || path === '/index.html';
 }
 
+let isStorefrontMounted = false;
+
 function mountStorefront() {
-  if (!shouldMountStorefront()) return;
+  if (!isHomepage()) return;
+  if (isStorefrontMounted && document.getElementById('corencore-storefront-root')) return;
 
   // 1. Inject Google Fonts
   if (!document.getElementById('corencore-fonts')) {
-    const fontPreconnect1 = document.createElement('link');
-    fontPreconnect1.rel = 'preconnect';
-    fontPreconnect1.href = 'https://fonts.googleapis.com';
-    document.head.appendChild(fontPreconnect1);
-
-    const fontPreconnect2 = document.createElement('link');
-    fontPreconnect2.rel = 'preconnect';
-    fontPreconnect2.href = 'https://fonts.gstatic.com';
-    fontPreconnect2.crossOrigin = 'anonymous';
-    document.head.appendChild(fontPreconnect2);
-
     const fontLink = document.createElement('link');
     fontLink.id = 'corencore-fonts';
     fontLink.rel = 'stylesheet';
@@ -278,12 +270,6 @@ function mountStorefront() {
   if (!root) {
     root = document.createElement('div');
     root.id = 'corencore-storefront-root';
-
-    // Hide ShopBase default theme container on the homepage
-    const defaultThemeApp = document.getElementById('app');
-    if (defaultThemeApp) {
-      defaultThemeApp.style.display = 'none';
-    }
 
     root.innerHTML = `
       <header id="header-container"></header>
@@ -307,16 +293,48 @@ function mountStorefront() {
     document.body.appendChild(root);
   }
 
+  // Hide default ShopBase theme elements when our storefront is active
+  const hideStyles = document.createElement('style');
+  hideStyles.id = 'corencore-hide-default';
+  hideStyles.textContent = `
+    #app > .theme-header,
+    #app > .theme-footer,
+    #app > .theme-main,
+    #app > main,
+    #app > header,
+    #app > footer,
+    #app > .wb-builder,
+    #app > .wb-preview {
+      display: none !important;
+    }
+  `;
+  if (!document.getElementById('corencore-hide-default')) {
+    document.head.appendChild(hideStyles);
+  }
+
   // 4. Initialize the Storefront App
   const app = new EmbedApp();
   app.init();
+  isStorefrontMounted = true;
 }
 
-// Auto-run on DOM ready or immediate
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', mountStorefront);
-} else {
+// Ensure execution on load & observe DOM mutations in case of client-side SPA routing
+function initStorefront() {
   mountStorefront();
+  
+  // Re-check after 500ms and 1500ms for delayed SPA rendering
+  setTimeout(mountStorefront, 500);
+  setTimeout(mountStorefront, 1500);
+
+  // Listen for popstate and hashchange
+  window.addEventListener('popstate', mountStorefront);
+  window.addEventListener('hashchange', mountStorefront);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initStorefront);
+} else {
+  initStorefront();
 }
 
 export { EmbedApp, mountStorefront };
