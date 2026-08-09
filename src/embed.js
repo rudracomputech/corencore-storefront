@@ -217,13 +217,13 @@ class EmbedApp {
   }
 
   render() {
-    // 1. Render Header Layer
+    // 1. Render Layer 1: Header Layer
     renderHeaderLayer(this.dom.layerHeader, this.state, this.actions);
 
-    // 2. Render Body Layer
+    // 2. Render Layer 2: Body Layer
     renderBodyLayer(this.dom.layerBody, this.state, this.actions);
 
-    // 3. Render Footer Layer
+    // 3. Render Layer 3: Footer Layer
     renderFooterLayer(this.dom.layerFooter, this.state, this.actions);
 
     // 4. Render Modals & Drawers Overlays
@@ -240,10 +240,67 @@ function isHomepage() {
   return path === '/' || path === '' || path === '/index.html';
 }
 
+function cleanupDefaultThemeElements() {
+  if (!isHomepage()) return;
+
+  // 1. Inject global cleanup style to permanently suppress the default ShopBase Web Builder theme
+  if (!document.getElementById('corencore-hide-default')) {
+    const hideStyles = document.createElement('style');
+    hideStyles.id = 'corencore-hide-default';
+    hideStyles.textContent = `
+      /* Completely hide default ShopBase Web Builder App and theme elements on Homepage */
+      #app,
+      .default-layout,
+      #wb-main,
+      .wb-builder,
+      .block-footer,
+      footer[role="contentinfo"],
+      body > footer:not(#layer-footer):not(#layer-footer *),
+      body > header:not(#layer-header):not(#layer-header *),
+      body > main:not(#layer-body):not(#layer-body *),
+      body > div:not(#corencore-storefront-root):not(#cart-drawer-root):not(#product-modal-root):not(#pages-modal-root):not(#admin-hub-root) {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      /* Ensure our 3-Layer Storefront is the single visible root */
+      #corencore-storefront-root {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        width: 100% !important;
+      }
+    `;
+    document.head.appendChild(hideStyles);
+  }
+
+  // 2. Hide any existing DOM elements directly
+  const appEl = document.getElementById('app');
+  if (appEl) {
+    appEl.style.display = 'none';
+  }
+
+  // 3. Hide any stray footers or headers outside our storefront
+  document.querySelectorAll('footer:not(#layer-footer), header:not(#layer-header), .block-footer, footer[role="contentinfo"]').forEach(el => {
+    if (!el.closest('#corencore-storefront-root')) {
+      el.style.display = 'none';
+    }
+  });
+}
+
 let isStorefrontMounted = false;
 
 function mountStorefront() {
   if (!isHomepage()) return;
+
+  // Run cleanup first
+  cleanupDefaultThemeElements();
+
   if (isStorefrontMounted && document.getElementById('corencore-storefront-root')) return;
 
   // 1. Inject Google Fonts
@@ -258,7 +315,7 @@ function mountStorefront() {
   // 2. Set Page Title & Meta
   document.title = "Core & Core — Pure Mother & Baby Care";
 
-  // 3. Inject 3-Layer Root Markup
+  // 3. Inject 3-Layer Root Markup at the top of body
   let root = document.getElementById('corencore-storefront-root');
   if (!root) {
     root = document.createElement('div');
@@ -282,41 +339,30 @@ function mountStorefront() {
       <div id="admin-hub-root"></div>
     `;
 
-    document.body.appendChild(root);
-  }
-
-  // Hide default ShopBase theme elements when our 3-layer storefront is active
-  const hideStyles = document.createElement('style');
-  hideStyles.id = 'corencore-hide-default';
-  hideStyles.textContent = `
-    #app > .theme-header,
-    #app > .theme-footer,
-    #app > .theme-main,
-    #app > main,
-    #app > header,
-    #app > footer,
-    #app > .wb-builder,
-    #app > .wb-preview {
-      display: none !important;
-    }
-  `;
-  if (!document.getElementById('corencore-hide-default')) {
-    document.head.appendChild(hideStyles);
+    // Prepend to body so it is always the first child at the top
+    document.body.prepend(root);
   }
 
   // 4. Initialize the Storefront App
   const app = new EmbedApp();
   app.init();
   isStorefrontMounted = true;
+
+  // Run cleanup again after mount
+  cleanupDefaultThemeElements();
 }
 
-// Ensure execution on load & observe DOM mutations in case of client-side SPA routing
+// Continuous check for SPA hydration and DOM mutations
 function initStorefront() {
+  cleanupDefaultThemeElements();
   mountStorefront();
-  setTimeout(mountStorefront, 500);
-  setTimeout(mountStorefront, 1500);
-  window.addEventListener('popstate', mountStorefront);
-  window.addEventListener('hashchange', mountStorefront);
+
+  setTimeout(() => { cleanupDefaultThemeElements(); mountStorefront(); }, 300);
+  setTimeout(() => { cleanupDefaultThemeElements(); mountStorefront(); }, 800);
+  setTimeout(() => { cleanupDefaultThemeElements(); mountStorefront(); }, 2000);
+
+  window.addEventListener('popstate', () => { cleanupDefaultThemeElements(); mountStorefront(); });
+  window.addEventListener('hashchange', () => { cleanupDefaultThemeElements(); mountStorefront(); });
 }
 
 if (document.readyState === 'loading') {
