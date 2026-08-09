@@ -1,0 +1,56 @@
+<!-- ========================================================================== -->
+<!-- CORE & CORE: SECTION 4 - ROUTINE FINDER QUIZ (Web Builder Section)         -->
+<!-- Paste this into a Custom HTML / Code Block in ShopBase Web Builder         -->
+<!-- ========================================================================== -->
+<div class="corencore-quiz-section" id="routine-quiz-section">
+  <div class="container">
+    <div class="quiz-card-wrapper" id="routine-quiz-container">
+      <div class="quiz-header">
+        <span class="quiz-badge">✨ Interactive Routine Finder</span>
+        <h2 class="quiz-title">Find Your Personalized Mother & Baby Routine</h2>
+        <p class="quiz-subtitle">Answer 3 quick questions to receive certified midwife-recommended botanical routines tailored to your current stage.</p>
+      </div>
+
+      <div class="quiz-progress-wrap">
+        <div class="quiz-progress-bar" style="width: 33.3%;"></div>
+      </div>
+
+      <div class="quiz-step-content" id="quiz-interactive-mount">
+        <!-- Interactive questions mount here via JavaScript -->
+        <div class="quiz-step-box active">
+          <h3 class="quiz-question-title">Step 1: What is your current journey stage?</h3>
+          <div class="quiz-options-grid">
+            <button class="quiz-option-btn" onclick="window.CoreNCoreApp && window.CoreNCoreApp.actions.selectQuizOption('stage', 'pregnant')">
+              <span class="quiz-option-icon">🤰</span>
+              <div>
+                <strong>Expecting Mama (Prenatal)</strong>
+                <p>1st, 2nd, or 3rd Trimester care</p>
+              </div>
+            </button>
+            <button class="quiz-option-btn" onclick="window.CoreNCoreApp && window.CoreNCoreApp.actions.selectQuizOption('stage', 'postpartum')">
+              <span class="quiz-option-icon">🤱</span>
+              <div>
+                <strong>New Mother (Postpartum)</strong>
+                <p>Healing, nursing & recovery</p>
+              </div>
+            </button>
+            <button class="quiz-option-btn" onclick="window.CoreNCoreApp && window.CoreNCoreApp.actions.selectQuizOption('stage', 'newborn')">
+              <span class="quiz-option-icon">👶</span>
+              <div>
+                <strong>Newborn & Infant Care</strong>
+                <p>0-12 months tender skin</p>
+              </div>
+            </button>
+            <button class="quiz-option-btn" onclick="window.CoreNCoreApp && window.CoreNCoreApp.actions.selectQuizOption('stage', 'both')">
+              <span class="quiz-option-icon">🌿</span>
+              <div>
+                <strong>Mama & Baby Shared Ritual</strong>
+                <p>Bonding care for both</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,62 @@
+<!-- ========================================================================== -->
+<!-- CORE & CORE: SECTION 1 - HEADER & ANNOUNCEMENT BAR (Web Builder Section)   -->
+<!-- Paste this into a Custom HTML / Code Block in ShopBase Web Builder         -->
+<!-- ========================================================================== -->
+<div class="corencore-header-section" id="corencore-header-section">
+  <!-- Top Announcement Ticker -->
+  <div class="announcement-bar">
+    <div class="container announcement-content">
+      <span class="announcement-highlight">Exclusive</span>
+      <span>🌿 Free Hospital Bag Essentials Sample Kit on orders over $50 | Use code <strong>MOMCARE15</strong> for 15% OFF</span>
+    </div>
+  </div>
+
+  <!-- Main Navigation Bar -->
+  <div class="main-header">
+    <div class="container header-inner">
+      <!-- Logo -->
+      <a href="/" class="brand-logo" id="header-logo-link">
+        <div class="brand-logo-icon">🌿</div>
+        <div class="brand-title-wrap">
+          <span style="line-height: 1.1; display: block;">Core & Core</span>
+          <span class="brand-subtitle">Pure Mother & Baby Care</span>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <ul class="nav-links">
+        <li class="nav-item"><a href="#categories-section">Categories</a></li>
+        <li class="nav-item"><a href="#products-section" data-filter="mother-care">Mother Care</a></li>
+        <li class="nav-item"><a href="#products-section" data-filter="baby-care">Baby Care</a></li>
+        <li class="nav-item"><a href="#products-section" data-filter="bundles">Bundles & Gifts</a></li>
+        <li class="nav-item"><a href="#routine-quiz-section" style="color: #5E8268; font-weight: 700;">✨ Routine Finder</a></li>
+        <li class="nav-item"><a href="#safety-standards-section">Clean Standards</a></li>
+      </ul>
+
+      <!-- Right Header Actions -->
+      <div class="header-actions">
+        <!-- Currency Converter -->
+        <select class="currency-select" id="header-currency-select" onchange="window.CoreNCoreApp && window.CoreNCoreApp.actions.setCurrency(this.value)">
+          <option value="USD">USD ($)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="GBP">GBP (£)</option>
+          <option value="INR">INR (₹)</option>
+          <option value="CAD">CAD (CA$)</option>
+          <option value="AUD">AUD (AU$)</option>
+        </select>
+
+        <!-- Search Button -->
+        <button class="search-button" onclick="const q=prompt('Search Mother & Baby products:'); if(q && window.CoreNCoreApp) window.CoreNCoreApp.actions.searchProducts(q);" title="Search Products">
+          <span>🔍</span>
+        </button>
+
+        <!-- Cart Drawer Trigger -->
+        <button class="cart-trigger" onclick="window.CoreNCoreApp && window.CoreNCoreApp.actions.toggleCart(true)" aria-label="Shopping Bag">
+          <span>🛒</span>
+          <span>Cart</span>
+          <span class="cart-badge" id="cart-counter-badge">0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

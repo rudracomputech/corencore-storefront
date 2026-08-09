@@ -191,6 +191,36 @@ app.post('/api/checkout', (req, res) => {
   });
 });
 
+// Web Builder Sections API
+app.get('/api/web-builder/sections', (req, res) => {
+  const sectionsDir = path.join(__dirname, '../web-builder-sections');
+  if (!fs.existsSync(sectionsDir)) {
+    return res.json({ success: true, sections: [] });
+  }
+  const files = fs.readdirSync(sectionsDir).filter(f => f.endsWith('.html'));
+  const sections = files.map(filename => {
+    const filePath = path.join(sectionsDir, filename);
+    const content = fs.readFileSync(filePath, 'utf8');
+    return {
+      filename,
+      title: filename.replace(/^\d+-/, '').replace('.html', '').replace(/-/g, ' ').toUpperCase(),
+      size: content.length,
+      previewSnippet: content.slice(0, 200)
+    };
+  });
+  res.json({ success: true, sections });
+});
+
+app.get('/api/web-builder/sections/:filename', (req, res) => {
+  const filePath = path.join(__dirname, '../web-builder-sections', req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: 'Section not found' });
+  }
+  const content = fs.readFileSync(filePath, 'utf8');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(content);
+});
+
 app.listen(PORT, () => {
   console.log(`🌸 Core & Core Mother & Baby API Server running on http://localhost:${PORT}`);
   console.log(`Connected to ShopBase domain: ${DOMAIN}`);
