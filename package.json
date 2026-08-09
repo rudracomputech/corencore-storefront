@@ -1,0 +1,23 @@
+{
+  "name": "corencore-shopbase-storefront",
+  "version": "1.0.0",
+  "description": "Mother Skin Care & Baby Care Storefront with ShopBase API Integration",
+  "main": "server/index.js",
+  "scripts": {
+    "dev:server": "node server/index.js",
+    "dev:client": "vite",
+    "dev": "concurrently \"node server/index.js\" \"vite --port 3000\"",
+    "build": "vite build",
+    "sync:catalog": "node server/sync-cli.js",
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "vite": "^5.3.4"
+  }
+}

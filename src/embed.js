@@ -1,0 +1,322 @@
+/**
+ * Core & Core - Mother & Baby Storefront Embed Script
+ * Injects and runs the complete Mother Skin Care & Baby Care storefront directly on corencore.onshopbase.com
+ */
+
+import { MOTHER_AND_BABY_PRODUCTS } from '../server/catalog-data.js';
+import { renderHeader } from './components/Header.js';
+import { renderHero } from './components/Hero.js';
+import { renderCategories } from './components/Categories.js';
+import { renderRoutineQuiz } from './components/RoutineQuiz.js';
+import { renderProductGrid } from './components/ProductGrid.js';
+import { renderProductModal } from './components/ProductModal.js';
+import { renderCartDrawer } from './components/CartDrawer.js';
+import { renderSafetyStandards } from './components/SafetyStandards.js';
+import { renderReviews } from './components/Reviews.js';
+import { renderFooter } from './components/Footer.js';
+import { renderPagesModal } from './components/PagesModal.js';
+import { renderAdminHub } from './components/AdminHub.js';
+
+// Currency exchange rates
+const CURRENCY_RATES = {
+  USD: { symbol: '$', rate: 1.0 },
+  EUR: { symbol: '€', rate: 0.92 },
+  GBP: { symbol: '£', rate: 0.79 },
+  INR: { symbol: '₹', rate: 83.5 },
+  CAD: { symbol: 'CA$', rate: 1.36 },
+  AUD: { symbol: 'AU$', rate: 1.52 }
+};
+
+class EmbedApp {
+  constructor() {
+    this.state = {
+      products: MOTHER_AND_BABY_PRODUCTS,
+      activeCategory: 'all',
+      currency: 'USD',
+      searchQuery: '',
+      sortBy: 'featured',
+      cart: JSON.parse(localStorage.getItem('corencore_cart') || '[]'),
+      isCartOpen: false,
+      activeModalProduct: null,
+      activePageKey: null,
+      isAdminHubOpen: false,
+      appliedPromo: localStorage.getItem('corencore_promo') || null,
+      quizStep: 1,
+      quizAnswers: {}
+    };
+
+    this.dom = {};
+    this.actions = {
+      setCurrency: this.setCurrency.bind(this),
+      formatPrice: this.formatPrice.bind(this),
+      setCategoryFilter: this.setCategoryFilter.bind(this),
+      searchProducts: this.searchProducts.bind(this),
+      setSortBy: this.setSortBy.bind(this),
+      toggleCart: this.toggleCart.bind(this),
+      addToCart: this.addToCart.bind(this),
+      updateCartQuantity: this.updateCartQuantity.bind(this),
+      removeFromCart: this.removeFromCart.bind(this),
+      applyPromo: this.applyPromo.bind(this),
+      proceedToCheckout: this.proceedToCheckout.bind(this),
+      openProductModal: this.openProductModal.bind(this),
+      closeProductModal: this.closeProductModal.bind(this),
+      openPageModal: this.openPageModal.bind(this),
+      closePageModal: this.closePageModal.bind(this),
+      openAdminHub: this.openAdminHub.bind(this),
+      closeAdminHub: this.closeAdminHub.bind(this)
+    };
+  }
+
+  init() {
+    console.log("🌸 Core & Core Mother & Baby Storefront Loaded on Live ShopBase");
+    this.bindDom();
+    this.render();
+  }
+
+  bindDom() {
+    this.dom = {
+      header: document.getElementById('header-container'),
+      hero: document.getElementById('hero-container'),
+      trustBar: document.getElementById('trust-bar-container'),
+      categories: document.getElementById('categories-container'),
+      routineQuiz: document.getElementById('routine-quiz-container'),
+      productGrid: document.getElementById('product-grid-container'),
+      safetyStandards: document.getElementById('safety-standards-container'),
+      reviews: document.getElementById('reviews-container'),
+      guideBanner: document.getElementById('guide-banner-container'),
+      footer: document.getElementById('footer-container'),
+      cartDrawer: document.getElementById('cart-drawer-root'),
+      productModal: document.getElementById('product-modal-root'),
+      pagesModal: document.getElementById('pages-modal-root'),
+      adminHub: document.getElementById('admin-hub-root')
+    };
+  }
+
+  setCurrency(currencyCode) {
+    this.state.currency = currencyCode;
+    this.render();
+  }
+
+  formatPrice(usdAmount) {
+    const amount = parseFloat(usdAmount) || 0;
+    const config = CURRENCY_RATES[this.state.currency] || CURRENCY_RATES.USD;
+    const converted = (amount * config.rate).toFixed(2);
+    return `${config.symbol}${converted}`;
+  }
+
+  setCategoryFilter(category) {
+    this.state.activeCategory = category;
+    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+    renderHeader(this.dom.header, this.state, this.actions);
+  }
+
+  searchProducts(query) {
+    this.state.searchQuery = query;
+    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+  }
+
+  setSortBy(sortKey) {
+    this.state.sortBy = sortKey;
+    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+  }
+
+  toggleCart(isOpen) {
+    this.state.isCartOpen = isOpen;
+    renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
+  }
+
+  addToCart(product, quantity = 1, variant = null) {
+    const selectedVariant = variant || product.variants?.[0] || { id: 1, title: 'Standard', price: product.price };
+    const cartItemId = `${product.id}-${selectedVariant.id}`;
+    
+    const existingIndex = this.state.cart.findIndex(item => item.cartItemId === cartItemId);
+    if (existingIndex > -1) {
+      this.state.cart[existingIndex].quantity += quantity;
+    } else {
+      this.state.cart.push({
+        cartItemId,
+        id: product.id,
+        variantId: selectedVariant.id,
+        shopbaseHandle: product.shopbase_handle || product.handle,
+        title: product.title,
+        variantTitle: selectedVariant.title !== 'Standard' && selectedVariant.title !== '1 PC' ? selectedVariant.title : '',
+        price: selectedVariant.price || product.price,
+        image: product.image || product.images?.[0],
+        quantity
+      });
+    }
+
+    this.saveCart();
+    renderHeader(this.dom.header, this.state, this.actions);
+    renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
+  }
+
+  updateCartQuantity(cartItemId, delta) {
+    const item = this.state.cart.find(i => i.cartItemId === cartItemId);
+    if (item) {
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        this.removeFromCart(cartItemId);
+        return;
+      }
+    }
+    this.saveCart();
+    renderHeader(this.dom.header, this.state, this.actions);
+    renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
+  }
+
+  removeFromCart(cartItemId) {
+    this.state.cart = this.state.cart.filter(i => i.cartItemId !== cartItemId);
+    this.saveCart();
+    renderHeader(this.dom.header, this.state, this.actions);
+    renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
+  }
+
+  saveCart() {
+    localStorage.setItem('corencore_cart', JSON.stringify(this.state.cart));
+  }
+
+  applyPromo(code) {
+    this.state.appliedPromo = code;
+    localStorage.setItem('corencore_promo', code);
+    renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
+  }
+
+  proceedToCheckout() {
+    if (!this.state.cart.length) return;
+    
+    const firstItem = this.state.cart[0];
+    const handle = firstItem.shopbaseHandle || firstItem.handle;
+    
+    if (handle) {
+      window.location.href = `/products/${handle}`;
+    } else {
+      window.location.href = `/collections/all`;
+    }
+  }
+
+  openProductModal(product) {
+    this.state.activeModalProduct = product;
+    renderProductModal(this.dom.productModal, product, this.state, this.actions);
+  }
+
+  closeProductModal() {
+    this.state.activeModalProduct = null;
+    renderProductModal(this.dom.productModal, null, this.state, this.actions);
+  }
+
+  openPageModal(pageKey) {
+    this.state.activePageKey = pageKey;
+    renderPagesModal(this.dom.pagesModal, pageKey, this.actions);
+  }
+
+  closePageModal() {
+    this.state.activePageKey = null;
+    renderPagesModal(this.dom.pagesModal, null, this.actions);
+  }
+
+  openAdminHub() {
+    this.state.isAdminHubOpen = true;
+    renderAdminHub(this.dom.adminHub, this.state, this.actions);
+  }
+
+  closeAdminHub() {
+    this.state.isAdminHubOpen = false;
+    renderAdminHub(this.dom.adminHub, this.state, this.actions);
+  }
+
+  render() {
+    renderHeader(this.dom.header, this.state, this.actions);
+    renderHero(this.dom.hero, this.dom.trustBar, this.actions);
+    renderCategories(this.dom.categories, this.actions);
+    renderRoutineQuiz(this.dom.routineQuiz, this.state, this.actions);
+    renderProductGrid(this.dom.productGrid, this.state, this.actions);
+    renderSafetyStandards(this.dom.safetyStandards);
+    renderReviews(this.dom.reviews);
+    renderFooter(this.dom.guideBanner, this.dom.footer, this.actions);
+    renderCartDrawer(this.dom.cartDrawer, this.state, this.actions);
+    renderProductModal(this.dom.productModal, this.state.activeModalProduct, this.state, this.actions);
+    renderPagesModal(this.dom.pagesModal, this.state.activePageKey, this.actions);
+    renderAdminHub(this.dom.adminHub, this.state, this.actions);
+  }
+}
+
+// Check if we should mount on this page (Homepage or general storefront)
+function shouldMountStorefront() {
+  const path = window.location.pathname.toLowerCase();
+  return path === '/' || path === '' || path === '/index.html';
+}
+
+function mountStorefront() {
+  if (!shouldMountStorefront()) return;
+
+  // 1. Inject Google Fonts
+  if (!document.getElementById('corencore-fonts')) {
+    const fontPreconnect1 = document.createElement('link');
+    fontPreconnect1.rel = 'preconnect';
+    fontPreconnect1.href = 'https://fonts.googleapis.com';
+    document.head.appendChild(fontPreconnect1);
+
+    const fontPreconnect2 = document.createElement('link');
+    fontPreconnect2.rel = 'preconnect';
+    fontPreconnect2.href = 'https://fonts.gstatic.com';
+    fontPreconnect2.crossOrigin = 'anonymous';
+    document.head.appendChild(fontPreconnect2);
+
+    const fontLink = document.createElement('link');
+    fontLink.id = 'corencore-fonts';
+    fontLink.rel = 'stylesheet';
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..800;1,400..800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap';
+    document.head.appendChild(fontLink);
+  }
+
+  // 2. Set Page Title & Meta
+  document.title = "Core & Core — Pure Mother & Baby Care";
+
+  // 3. Inject Root Markup
+  let root = document.getElementById('corencore-storefront-root');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'corencore-storefront-root';
+
+    // Hide ShopBase default theme container on the homepage
+    const defaultThemeApp = document.getElementById('app');
+    if (defaultThemeApp) {
+      defaultThemeApp.style.display = 'none';
+    }
+
+    root.innerHTML = `
+      <header id="header-container"></header>
+      <main id="main-content">
+        <section id="hero-container"></section>
+        <section id="trust-bar-container"></section>
+        <section id="categories-container"></section>
+        <section id="routine-quiz-container"></section>
+        <section id="product-grid-container"></section>
+        <section id="safety-standards-container"></section>
+        <section id="reviews-container"></section>
+        <section id="guide-banner-container"></section>
+      </main>
+      <footer id="footer-container"></footer>
+      <div id="cart-drawer-root"></div>
+      <div id="product-modal-root"></div>
+      <div id="pages-modal-root"></div>
+      <div id="admin-hub-root"></div>
+    `;
+
+    document.body.appendChild(root);
+  }
+
+  // 4. Initialize the Storefront App
+  const app = new EmbedApp();
+  app.init();
+}
+
+// Auto-run on DOM ready or immediate
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', mountStorefront);
+} else {
+  mountStorefront();
+}
+
+export { EmbedApp, mountStorefront };
